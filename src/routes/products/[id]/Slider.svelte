@@ -4,6 +4,12 @@
 	let centerIndex = $state(0);
 	let leftIndex = $derived((centerIndex - 1 + images.length) % images.length);
 	let rightIndex = $derived((centerIndex + 1) % images.length);
+
+	$effect(() => {
+		images;
+		centerIndex = 0;
+	});
+
 	function moveLeft() {
 		centerIndex = (centerIndex - 1 + images.length) % images.length;
 	}

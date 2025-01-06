@@ -1,43 +1,17 @@
 <script lang="ts">
+	import { afterNavigate } from '$app/navigation';
+	import type { Product } from '$lib/server/product';
+	import type { PageServerData } from './$types';
 	import Slider from './Slider.svelte';
 
-	type RelatedProduct = {
-		id: string;
-		name: string;
-		price: number;
-	};
-	type Product = RelatedProduct & {
-		images: string[];
-	};
-	const product: Product = {
-		id: 'svelte-book',
-		name: 'Svelte Guide',
-		price: 3500,
-		images: [
-			'https://github.com/svelte-book/sample-app/raw/main/static/svelte-book-1.png',
-			'https://github.com/svelte-book/sample-app/raw/main/static/svelte-book-2.png',
-			'https://github.com/svelte-book/sample-app/raw/main/static/svelte-book-3.png'
-		]
-	};
-	const relatedProducts: RelatedProduct[] = [
-		{
-			id: 'react-book',
-			name: 'React Book',
-			price: 3500
-		},
-		{
-			id: 'vue-book',
-			name: 'Vue Book',
-			price: 3500
-		},
-		{ id: 'angular-book', name: 'Angular Book', price: 3500 }
-	];
+	const { data }: { data: PageServerData } = $props();
+	const { product, relatedProducts, cart } = $derived(data);
+	let recommendRequest = $state(new Promise<Product[]>(() => {}));
 
-	let cart = $state<string[]>([]);
-
-	function addToCart(productId: string) {
-		cart.push(productId);
-	}
+	afterNavigate(() => {
+		if (product === undefined) return;
+		recommendRequest = fetch(`/api/recommend?id=${product.id}`).then((res) => res.json());
+	});
 </script>
 
 <header class="header">
@@ -46,7 +20,7 @@
 		<ul class="header-links">
 			<li>ようこそゲストさん</li>
 			<li>
-				<a href="/cart">カート (0)</a>
+				<a href="/cart">カート ({cart.length})</a>
 			</li>
 		</ul>
 	</nav>
@@ -54,25 +28,46 @@
 
 <article class="product">
 	<div class="product-main">
-		<div class="image-container">
-			<Slider images={product.images}></Slider>
-		</div>
-		<div>
-			<h2>{product.name}</h2>
-			<dl>
-				<dt>価格</dt>
-				<dd>{product.price}円</dd>
-			</dl>
-			<div>
-				{#if cart.includes(product.id)}
-					<button disabled>カート追加済み</button>
-				{:else}
-					<button onclick={() => addToCart(product.id)}>カートに入れる</button>
-				{/if}
+		{#if product !== undefined}
+			<div class="image-container">
+				<Slider images={product.images}></Slider>
 			</div>
-		</div>
+			<div>
+				<h2>{product.name}</h2>
+				<dl>
+					<dt>価格</dt>
+					<dd>{product.price}円</dd>
+				</dl>
+				<div>
+					{#if cart.includes(product.id)}
+						<button disabled>カート追加済み</button>
+					{:else}
+						<form method="POST">
+							<input type="hidden" name="productId" value={product.id} />
+							<button>カートに入れる</button>
+						</form>
+					{/if}
+				</div>
+			</div>
+		{/if}
 	</div>
 	<footer>
+		<h3>おすすめ商品</h3>
+		{#await recommendRequest}
+			<div>ロード中...</div>
+		{:then products}
+			<ul>
+				{#each products as product}
+					<li>
+						<a href="/products/{product.id}">{product.name}</a>
+						- {product.price}円
+					</li>
+				{/each}
+			</ul>
+		{:catch}
+			<div>読み込みエラー</div>
+		{/await}
+
 		<h3>関連商品</h3>
 		<ul>
 			{#each relatedProducts as product}
