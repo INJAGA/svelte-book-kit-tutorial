@@ -1,23 +1,16 @@
-import { readFile, writeFile } from 'fs/promises';
-const dataPath = 'data/cart.json';
+import { database } from '$lib/server/mongodb';
+import type { ObjectId } from 'mongodb';
 
-export async function addToCart(productId: string) {
-	const cart = await loadCart();
-	if (!cart.includes(productId)) {
-		cart.push(productId);
-	}
-	await writeFile(dataPath, JSON.stringify(cart), { encoding: 'utf-8' });
-}
+type CartItem = {
+	_id?: ObjectId;
+	productId: string;
+};
 
-export async function loadCart() {
-	try {
-		const content = await readFile(dataPath, { encoding: 'utf-8' });
-		return JSON.parse(content) as string[];
-	} catch (err: any) {
-		if (err.code === 'ENOENT') {
-			return [];
-		} else {
-			throw err;
-		}
-	}
-}
+export const addToCart = async (productId: string) => {
+	await database.collection<CartItem>('cart').insertOne({ productId });
+};
+
+export const loadCart = async () => {
+	const cart = database.collection<CartItem>('cart').find();
+	return await cart.map((doc) => doc.productId).toArray();
+};

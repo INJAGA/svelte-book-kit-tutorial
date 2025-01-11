@@ -10,12 +10,12 @@
 		centerIndex = 0;
 	});
 
-	function moveLeft() {
+	const moveLeft = () => {
 		centerIndex = (centerIndex - 1 + images.length) % images.length;
-	}
-	function moveRight() {
+	};
+	const moveRight = () => {
 		centerIndex = (centerIndex + 1) % images.length;
-	}
+	};
 </script>
 
 <div class="slider">
