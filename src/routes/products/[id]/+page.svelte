@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { afterNavigate } from '$app/navigation';
+	import { page } from '$app/state';
 	import type { Product } from '$lib/server/product';
 	import type { PageProps } from './$types';
 	import Slider from './Slider.svelte';
@@ -13,6 +14,14 @@
 		recommendRequest = fetch(`/api/recommend?id=${product.id}`).then((res) => res.json());
 	});
 </script>
+
+<svelte:head>
+	<meta name="twitter:card" content="summary" />
+	<meta property="og:type" content="website" />
+	<meta property="og:url" content={page.url.toString()} />
+	<meta property="og:title" content={product?.name} />
+	<meta property="og:description" content={`${product?.name} - ${product?.price}円`} />
+</svelte:head>
 
 <header class="header">
 	<a class="header-title" href="/">Svelte EC</a>
