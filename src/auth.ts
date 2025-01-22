@@ -12,6 +12,7 @@ declare module '@auth/sveltekit' {
 }
 
 export const { handle } = SvelteKitAuth({
+	trustHost: true,
 	providers: [Auth0],
 	callbacks: {
 		jwt({ token, account, profile, user }) {
