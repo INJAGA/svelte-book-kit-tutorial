@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { signIn, signOut } from '@auth/sveltekit/client';
-	import type { PageData } from './$types';
+	import type { PageProps } from './$types';
 
-	const { data }: { data: PageData } = $props();
+	const { data }: PageProps = $props();
 	const { user } = $derived(data);
 </script>
 

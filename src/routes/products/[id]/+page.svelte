@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { afterNavigate } from '$app/navigation';
 	import type { Product } from '$lib/server/product';
-	import type { PageData } from './$types';
+	import type { PageProps } from './$types';
 	import Slider from './Slider.svelte';
 
-	const { data }: { data: PageData } = $props();
+	const { data }: PageProps = $props();
 	const { product, relatedProducts, cart, user } = $derived(data);
 	let recommendRequest = $state(new Promise<Product[]>(() => {}));
 
