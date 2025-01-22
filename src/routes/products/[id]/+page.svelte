@@ -1,15 +1,15 @@
 <script lang="ts">
 	import { afterNavigate } from '$app/navigation';
 	import type { Product } from '$lib/server/product';
-	import type { PageServerData } from './$types';
+	import type { PageData } from './$types';
 	import Slider from './Slider.svelte';
 
-	const { data }: { data: PageServerData } = $props();
-	const { product, relatedProducts, cart } = $derived(data);
+	const { data }: { data: PageData } = $props();
+	const { product, relatedProducts, cart, user } = $derived(data);
 	let recommendRequest = $state(new Promise<Product[]>(() => {}));
 
 	afterNavigate(() => {
-		if (product === undefined) return;
+		if (!product) return;
 		recommendRequest = fetch(`/api/recommend?id=${product.id}`).then((res) => res.json());
 	});
 </script>
@@ -18,7 +18,14 @@
 	<a class="header-title" href="/">Svelte EC</a>
 	<nav>
 		<ul class="header-links">
-			<li>ようこそゲストさん</li>
+			<li>
+				ようこそ
+				{#if user}
+					{user.name} ({user.email})さん <a href="/login">ログアウト</a>
+				{:else}
+					ゲストさん <a href="/login">ログイン</a>
+				{/if}
+			</li>
 			<li>
 				<a href="/cart">カート ({cart.length})</a>
 			</li>
@@ -39,12 +46,15 @@
 					<dd>{product.price}円</dd>
 				</dl>
 				<div>
-					{#if cart.includes(product.id)}
+					{#if cart.find((item) => item.id === product.id)}
 						<button disabled>カート追加済み</button>
 					{:else}
 						<form method="POST">
 							<input type="hidden" name="productId" value={product.id} />
-							<button>カートに入れる</button>
+							<button disabled={!user}>カートに入れる</button>
+							{#if !user}
+								<p>カートを使うには<a href="/login">ログイン</a>してください。</p>
+							{/if}
 						</form>
 					{/if}
 				</div>

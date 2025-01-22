@@ -42,6 +42,7 @@
 		"vitest": "^2.0.4"
 	},
 	"dependencies": {
+		"@auth/sveltekit": "^1.7.4",
 		"mongodb": "^6.12.0"
 	}
 }
