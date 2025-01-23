@@ -12,6 +12,10 @@ export const addToCart = async (userId: string, productId: string) => {
 	await database.collection<CartItem>('cartItems').insertOne({ userId, productId });
 };
 
+export const removeFromCart = async (userId: string, productId: string) => {
+	await database.collection<CartItem>('cartItems').deleteOne({ userId, productId });
+};
+
 export const loadCartItems = async (userId: string) => {
 	const items = database.collection<CartItem>('cartItems').find({ userId });
 	const productIds = await items.map((item) => item.productId).toArray();

@@ -1,18 +1,34 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
 	import { afterNavigate } from '$app/navigation';
 	import { page } from '$app/state';
 	import type { Product } from '$lib/server/product';
+	import { onMount } from 'svelte';
 	import type { PageProps } from './$types';
 	import Slider from './Slider.svelte';
 
 	const { data }: PageProps = $props();
-	const { product, relatedProducts, cart, user } = $derived(data);
+	const { product, relatedProducts, user } = $derived(data);
+
+	let cart: Product[] = $state([]);
+	let cartOpen = $state(false);
 	let recommendRequest = $state(new Promise<Product[]>(() => {}));
 
 	afterNavigate(() => {
 		if (!product) return;
 		recommendRequest = fetch(`/api/recommend?id=${product.id}`).then((res) => res.json());
 	});
+
+	onMount(() => loadCart());
+
+	async function loadCart() {
+		cart = await fetch('/api/cart').then((res) => res.json());
+	}
+
+	function toggleCart(event: MouseEvent) {
+		event.preventDefault();
+		cartOpen = !cartOpen;
+	}
 </script>
 
 <svelte:head>
@@ -35,8 +51,27 @@
 					ゲストさん <a href="/login">ログイン</a>
 				{/if}
 			</li>
-			<li>
-				<a href="/cart">カート ({cart.length})</a>
+			<li class="cart">
+				<a href="/cart" onclick={toggleCart}>
+					カート ({cart.length})
+				</a>
+				{#if cartOpen}
+					<div class="cart-detail">
+						{#if cart.length === 0}
+							<div>カートは空です</div>
+						{:else}
+							<ul>
+								{#each cart as item}
+									<li>
+										<a href="/products/{item.id}">{item.name}</a>
+										- {item.price}円
+									</li>
+								{/each}
+							</ul>
+						{/if}
+						<a href="/cart">詳細</a>
+					</div>
+				{/if}
 			</li>
 		</ul>
 	</nav>
@@ -58,7 +93,16 @@
 					{#if cart.find((item) => item.id === product.id)}
 						<button disabled>カート追加済み</button>
 					{:else}
-						<form method="POST">
+						<form
+							method="POST"
+							action="/cart?/add"
+							use:enhance={() => {
+								return async ({ update }) => {
+									await update();
+									await loadCart();
+								};
+							}}
+						>
 							<input type="hidden" name="productId" value={product.id} />
 							<button disabled={!user}>カートに入れる</button>
 							{#if !user}
@@ -142,5 +186,17 @@
 		width: 100%;
 		max-width: 400px;
 		overflow: hidden;
+	}
+	.cart {
+		position: relative;
+	}
+	.cart-detail {
+		position: absolute;
+		right: 0;
+		top: 100%;
+		width: 250px;
+		padding: 10px;
+		background-color: #fff;
+		border: 1px solid gray;
 	}
 </style>
